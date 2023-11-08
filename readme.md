@@ -11,6 +11,11 @@ mamba env create --file environment.yml
 ```
 
 # How to run
+Activate environment
+```
+conda activate plant_connectome_extraction
+```
+See available commands
 ```
 python main.py --help
 ```
@@ -30,7 +35,7 @@ python main.py --help
 ### Example:
 
 ```
-python main.py create-proto-network create-proto-network
+python main.py create-proto-network 
 --out-dir
 some_directory
 --genes-of-interest
