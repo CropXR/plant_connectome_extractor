@@ -97,19 +97,27 @@ def expand_network_of_interest(full_edgelist: Path,
 
 @app.command()
 def create_proto_network(
-        out_dir: Annotated[Path, typer.Option(help='Directory in which output files will be placed')],
-        genes_of_interest: Annotated[Path,
+        out_dir: Annotated[
+            Path,
+            typer.Option(help='Directory in which output files will be placed')
+        ],
+        genes_of_interest: Annotated[
+            Path,
             typer.Option(...,
                           help='Path to file that lists genes you are interested in,'
-                                ' separated by space')],
-        pp_of_interest:  Annotated[Path,
+                                ' separated by space')
+        ],
+        pp_of_interest:  Annotated[
+            Path,
             typer.Option(...,
                 help='Path to file that lists proteins/phenotypes you are interested in,'
-                     ' separated by space')],
-        re_extract_data: Annotated[bool,
+                     ' separated by space')
+        ],
+        re_extract_data: Annotated[
+            bool,
             typer.Option("--re-extract-data",
-                help="If provided, re-extract all data from plantconnectome")] = False,
-         ):
+                help="If provided, re-extract all data from plantconnectome")
+        ] = False):
     """Given a list of genes/molecules and process/phenotypes, extract all their connections
     from plant connectome using the API.
 
