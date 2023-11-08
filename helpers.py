@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
@@ -51,13 +52,13 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
     :param roi_dict: Dict that contains name of gene/phenotype as key, and its
                      type (e.g. GM for gene/molecule) as value
     """
-    out_dir.mkdir()
-    date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    sub_result_folder = out_dir / f'{date}_per_gene_result'
-    sub_result_folder.mkdir()
+    out_dir.mkdir(exist_ok=True)
+    # date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # sub_result_folder = out_dir / 'per_gene_result'
+    # sub_result_folder.mkdir()
 
     totdf = pd.DataFrame()
-
+    logging.info('Making API requests to plantconnectome...')
     # Save connectome output for it and annotate context
     for regul in tqdm(roi_dict.keys()):
         err = ""
@@ -82,7 +83,7 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
                 err = "{0}alias".format(err)
 
             if err == "normalalias":
-                print("{0} - {1}".format(regul, err))
+                logging.warning("{0} - {1}".format(regul, err))
                 continue
         elif roitype == "PP":
             try:
@@ -103,7 +104,7 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
                 err = "substr"
 
             if err == "normalsubstr":
-                print("{0} - {1}".format(regul, err))
+                logging.warning("{0} - {1}".format(regul, err))
                 continue
         else:
             continue
@@ -116,7 +117,7 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
         df["query"] = regul
         df["querytype"] = roitype
 
-        df.to_csv(sub_result_folder / f"{regul}.tsv", sep="\t", index=False)
+        df.to_csv(out_dir / f"{regul}.tsv", sep="\t", index=False)
         totdf = pd.concat([totdf, df])
 
     totdf = totdf.drop_duplicates(subset=totdf.columns[:4])
@@ -129,8 +130,6 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
     :param df: dataframe that contains 'Pubmed ID" column
     :return: df with fields that describe the information of the study
     """
-    # Remove any rows with NaN values
-    df = df.dropna()
     # List PMIDs with Target or Source columns containing any of the keywords
     keyword_regex = '|'.join(keywords)
     pmids = np.concatenate((
