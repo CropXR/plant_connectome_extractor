@@ -12,8 +12,8 @@ import networkx as nx
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from helpers import parse_input_list_in_file, keep_only_edges_with_both_genes, \
-    extract_from_plantconnectome
+from helpers import parse_input_list_in_file, keep_only_edges_with_relevant_nodes, \
+    extract_from_plantconnectome, annotate_from_pmid
 
 app = typer.Typer()
 
@@ -86,7 +86,7 @@ def expand_network_of_interest(full_edgelist: Path,
     nx.draw_circular(original_graph, with_labels=True)
     plt.show()
 
-
+    # TODO look at data storing, try to reduce redundancy
     out_df = nx.to_pandas_edgelist(original_graph)
     out_df.to_csv(out_path, sep='\t')
 
@@ -96,7 +96,7 @@ def expand_network_of_interest(full_edgelist: Path,
 
 
 @app.command()
-def create_network_from_items_of_interest(
+def create_proto_network(
         out_dir: Annotated[Path, typer.Option(help='Directory in which output files will be placed')],
         genes_of_interest: Annotated[Path,
             typer.Option(...,
@@ -110,12 +110,13 @@ def create_network_from_items_of_interest(
             typer.Option("--re-extract-data",
                 help="If provided, re-extract all data from plantconnectome")] = False,
          ):
-    """Given a list of molecules and phenotypes, extract all their connections
+    """Given a list of genes/molecules and process/phenotypes, extract all their connections
     from plant connectome using the API.
 
     This is info that can be used to create a new network, or expand an
     existing network."""
     ## Dictionary that maps genes and process/phenotype of interest to a type
+    # Ensure everything is uppercase
     # Gene/Molecule
     genes_of_interest_list = parse_input_list_in_file(genes_of_interest)
     roi_dict = {gene: 'GM' for gene in genes_of_interest_list}
@@ -124,16 +125,22 @@ def create_network_from_items_of_interest(
     roi_dict.update({pp: 'PP' for pp in pp_of_interest_list})
 
     if re_extract_data:
-        all_edges  = extract_from_plantconnectome(out_dir, roi_dict)
+        all_edges = extract_from_plantconnectome(out_dir, roi_dict)
+        all_edges.to_csv(out_dir / "totaldf.tsv", sep="\t", index=False)
     else:
         in_file = out_dir / 'totaldf.tsv'
         assert in_file.exists(), ("Have you extracted info from "
                                   "plantconnectome before? If not, "
                                   "do so with the --re-extract-data flag")
-        all_edges = pd.read_csv(in_file, sep='\t', index_col=0)
+        all_edges = pd.read_csv(in_file, sep='\t')
 
-    original_edges = keep_only_edges_with_both_genes(all_edges,
-                                                     genes_of_interest_list)
+    pruned_edges = keep_only_edges_with_relevant_nodes(
+        all_edges, genes_of_interest_list + pp_of_interest_list)
+
+    keywords = ["THERMO", "TEMPERATURE", "DROUGHT", "WATER", "OSMOTIC",
+                "SALT"]
+    pruned_edges = annotate_from_pmid(pruned_edges, keywords=keywords)
+    pruned_edges.to_csv(out_dir / f"pruned_df.tsv", sep="\t", index=False)
 
 
 if __name__ == '__main__':
