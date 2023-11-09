@@ -5,7 +5,7 @@ Generate initial networks from groups of genes, or expand already known networks
 ```
 git clone https://github.com/bnoordijk/plant_connectome_extractor.git
 ```
-
+Use [mamba](https://mamba.readthedocs.io/en/latest/mamba-installation.html) to create environment
 ```
 mamba env create --file environment.yml 
 ```
