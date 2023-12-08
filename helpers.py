@@ -93,7 +93,6 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
         df = pd.concat([df1, df2])
         df = df.drop_duplicates()
 
-        # df = annotate_from_pmid(df)
         df["query"] = regul
         df["querytype"] = roitype
 
@@ -107,7 +106,7 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
 def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
     """Add extra information to dataframe based on its pubmed-IDs
 
-    :param df: dataframe that contains 'Pubmed ID" column
+    :param df: dataframe that contains 'Pubmed ID' column
     :return: df with fields that describe the information of the study
     """
     # List PMIDs with Target or Source columns containing any of the keywords
@@ -122,7 +121,7 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
             df.loc[index, "HD_context"] = 1
         else:
             df.loc[index, "HD_context"] = 0
-    df["HD_context"] = df["HD_context"].astype(int)
+    df.loc[:, "HD_context"] = df["HD_context"].astype(int)
     # Fetch information from Pubmed for each PMID
     pmid = list(df['Pubmed ID'].unique())
     ez.email = "tijmen.vanbutselaar@wur.nl"
@@ -151,43 +150,33 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
     for index, row in df.iterrows():
         # Look up if keyword mentioned in abstract of PMID
         abstract = row['abstract']
-        try:
-            if any(keywd in abstract.upper() for keywd in keywords):
-                df.loc[index, "keywd"] = 1
-            else:
-                df.loc[index, "keywd"] = 0
-        except:
+        if any(keywd in abstract.upper() for keywd in keywords):
+            df.loc[index, "keywd"] = 1
+        else:
             df.loc[index, "keywd"] = 0
 
-        # Look up if Arabidopsis mentioned in abstract or keywords
-        try:
-            if ("Arabidopsis" in row['raw']) or (
-                    "Arabidopsis" in row['abstract']):
-                df.loc[index, "Ath"] = 1
-            else:
-                df.loc[index, "Ath"] = 0
-        except:
+    # Look up if Arabidopsis mentioned in abstract or keywords
+
+        if ("Arabidopsis" in row['raw']) or (
+                "Arabidopsis" in row['abstract']):
+            df.loc[index, "Ath"] = 1
+        else:
             df.loc[index, "Ath"] = 0
+
     df['keywd'] = df['keywd'].astype(int)
     df['Ath'] = df['Ath'].astype(int)
     df = df.drop(columns="raw")
     # Look up if root/shoot terminology used in abstract
     for index, row in df.iterrows():
         abstract = row['abstract']
-        try:
-            if "ROOT" in abstract.upper():
-                df.loc[index, "root"] = 1
-            else:
-                df.loc[index, "root"] = 0
-        except:
+        if "ROOT" in abstract.upper():
+            df.loc[index, "root"] = 1
+        else:
             df.loc[index, "root"] = 0
-        try:
-            if any(keywd in abstract.upper() for keywd in
-                   ["SHOOT", "LEAF", "HYPOCOTYL"]):
-                df.loc[index, "shoot"] = 1
-            else:
-                df.loc[index, "shoot"] = 0
-        except:
+        if any(keywd in abstract.upper() for keywd in
+               ["SHOOT", "LEAF", "HYPOCOTYL"]):
+            df.loc[index, "shoot"] = 1
+        else:
             df.loc[index, "shoot"] = 0
     df['root'] = df['root'].astype(int)
     df['shoot'] = df['shoot'].astype(int)

@@ -72,11 +72,13 @@ def do_one_iter_network_expansion(
 
     new_connections = pd.concat(connection_df_list)
 
-    potential_expansion_network = nx.from_pandas_edgelist(new_connections,
-                                                          source='Source',
-                                                          target='Target',
-                                                          edge_attr=True,
-                                                          create_using=nx.DiGraph)
+    potential_expansion_network = nx.from_pandas_edgelist(
+        new_connections,
+        source='Source',
+        target='Target',
+        edge_attr=True,
+        create_using=nx.DiGraph
+    )
     nx.set_node_attributes(potential_expansion_network, True, 'extra')
 
     nx.set_node_attributes(original_graph, False, 'extra')
@@ -133,27 +135,30 @@ def do_one_iter_network_expansion(
 def expand_network_of_interest(
         input_edgelist_path: Annotated[
             Path,
-            typer.Option(help='Path to edge list tsv of network '
+            typer.Option('--input-edgelist', '-i',help='Path to edge list tsv of network '
                               'that needs to be expanded')
         ],
         connectome_result_folder: Annotated[
             Path,
-            typer.Option(help='Path to folder in which (existing) '
+            typer.Option('--connectome-result-folder', '-f',help='Path to folder in which (existing) '
                               'plantconnectome requests are located')
         ],
         keywords_of_interest: Annotated[
             Path,
-            typer.Option(
+            typer.Option('--keywords', '-k',
                 help='Path to file that lists keywords you are interested in,'
                      ' separated by space. Used for annotation of edges')
         ],
         out_path: Annotated[
             Path,
-            typer.Option(help='Path to output directory')
+            typer.Option('--out-path', '-o',
+                         help='Path to output directory. Files will be'
+                              ' created in this directory automatically.')
         ],
         nr_iters: Annotated[
             int,
-            typer.Option(help='Number of iterations, i.e. how many steps '
+            typer.Option('--nr-iters', '-n',
+                         help='Number of iterations, i.e. how many steps '
                               'between nodes will be considered for network'
                               ' inference')
         ]):
@@ -179,26 +184,30 @@ def expand_network_of_interest(
 def create_proto_network(
         out_dir: Annotated[
             Path,
-            typer.Option(help='Directory in which output files will be placed')
+            typer.Option('--out-dir', '-o',
+                         help='Directory in which output files will be placed')
         ],
         genes_of_interest: Annotated[
             Path,
-            typer.Option(help='Path to file that lists genes you are interested in,'
+            typer.Option('--genes', '-g',
+                         help='Path to file that lists genes you are interested in,'
                                 ' separated by space')
         ],
         pp_of_interest:  Annotated[
             Path,
-            typer.Option(help='Path to file that lists proteins/phenotypes you are interested in,'
+            typer.Option('--protein-phenotype', '-p',
+                         help='Path to file that lists proteins/phenotypes you are interested in,'
                      ' separated by space')
         ],
         keywords_of_interest: Annotated[
             Path,
-            typer.Option(help='Path to file that lists keywords you are interested in,'
-                              ' separated by space')
-        ],
+            typer.Option('--keywords', '-k',
+                         help='Path to file that lists keywords you are interested in,'
+                              ' separated by space. Used to annotate edges in cytoscape ')
+        ] = None,
         re_extract_data: Annotated[
             bool,
-            typer.Option("--re-extract-data",
+            typer.Option("--re-extract-data", '-r',
                 help="If provided, re-extract all data from plantconnectome")
         ] = False):
     """Given a list of genes/molecules and process/phenotypes, extract all their connections
@@ -226,8 +235,9 @@ def create_proto_network(
 
     pruned_edges = keep_only_edges_with_relevant_nodes(
         all_edges, genes_of_interest_list + pp_of_interest_list)
-    keywords = parse_input_list_in_file(keywords_of_interest)
-    pruned_edges = annotate_from_pmid(pruned_edges, keywords=keywords)
+    if keywords_of_interest:
+        keywords = parse_input_list_in_file(keywords_of_interest)
+        pruned_edges = annotate_from_pmid(pruned_edges, keywords=keywords)
     pruned_edges.to_csv(out_dir / f"pruned_df.tsv", sep="\t", index=False)
 
 
