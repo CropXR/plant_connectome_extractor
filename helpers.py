@@ -95,6 +95,8 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
 
         df["query"] = regul
         df["querytype"] = roitype
+        if '/' in regul:
+            regul = regul.replace('/', ' OR ')
 
         df.to_csv(out_dir / f"{regul}.tsv", sep="\t", index=False)
         totdf = pd.concat([totdf, df])
