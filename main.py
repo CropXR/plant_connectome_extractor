@@ -170,7 +170,7 @@ def expand_network_of_interest(
     if not out_file_basis.endswith('_expand_iter'):
         out_file_basis = out_file_basis + '_expand_iter'
     input_file = input_edgelist_path
-
+    out_path.mkdir(exist_ok=True)
     for i in range(1, nr_iters + 1):
         output_file = out_path / f'{out_file_basis}{i}.tsv'
         do_one_iter_network_expansion(input_file,
