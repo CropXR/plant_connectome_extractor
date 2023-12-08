@@ -61,53 +61,33 @@ def extract_from_plantconnectome(out_dir: Path, roi_dict: Dict) -> pd.DataFrame:
     logging.info('Making API requests to plantconnectome...')
     # Save connectome output for it and annotate context
     for regul in tqdm(roi_dict.keys()):
-        err = ""
         roitype = roi_dict.get(regul)
+        res = requests.get(
+            "https://connectome.plant.tools/normal/{0}".format(regul))
+        try:
+            df1 = pd.read_html(res.content)[0]
+        except ValueError as e:
+            logging.warning(f"\n{regul} normal search returned Error: '{e}'. "
+                            f"Skipping that result.")
+            df1 = pd.DataFrame()
 
         # If gene/molecule
+
         if roitype == "GM":
-            # Get the output table from PlantConnectome
-            try:
-                res = requests.get(
-                    "https://connectome.plant.tools/normal/{0}".format(regul))
-                df1 = pd.read_html(res.content)[0]
-            except:
-                df1 = pd.DataFrame()
-                err = "normal"
-            try:
-                res = requests.get(
-                    "https://connectome.plant.tools/alias/{0}".format(regul))
-                df2 = pd.read_html(res.content)[0]
-            except:
-                df2 = pd.DataFrame()
-                err = "{0}alias".format(err)
-
-            if err == "normalalias":
-                logging.warning("{0} - {1}".format(regul, err))
-                continue
+            search_type = 'alias'
         elif roitype == "PP":
-            try:
-                res = requests.get(
-                    "https://connectome.plant.tools/normal/{0}".format(regul))
-                df1 = pd.read_html(res.content)[0]
-            except:
-                df1 = pd.DataFrame()
-                err = "normal"
-
-            try:
-                res = requests.get(
-                    "https://connectome.plant.tools/substring/{0}".format(
-                        regul))
-                df2 = pd.read_html(res.content)[0]
-            except:
-                df2 = pd.DataFrame()
-                err = "substr"
-
-            if err == "normalsubstr":
-                logging.warning("{0} - {1}".format(regul, err))
-                continue
+            search_type = 'substring'
         else:
-            continue
+            raise KeyError(f'{roitype} is not a known interest type. '
+                           f'Only GM and PP are supported.')
+
+        res = requests.get(f"https://connectome.plant.tools/{search_type}/{regul}")
+        try:
+            df2 = pd.read_html(res.content)[0]
+        except ValueError as e:
+            logging.warning(f"\n{regul} {search_type} search returned Error: '{e}'. "
+                            f"Skipping that result.\n")
+            df2 = pd.DataFrame()
 
         # Merge two search type dfs
         df = pd.concat([df1, df2])
