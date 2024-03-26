@@ -154,6 +154,8 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
             rawoutput.append(str(i['MedlineCitation']['KeywordList']))
     abstract_dict = dict(zip(pmid, abstracts))
     raw_dict = dict(zip(pmid, rawoutput))
+
+
     df['abstract'] = df['Pubmed ID'].map(abstract_dict)
     df['raw'] = df['Pubmed ID'].map(raw_dict)
     for index, row in df.iterrows():
@@ -172,8 +174,8 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
         else:
             df.loc[index, "Ath"] = 0
 
-    df['keywd'] = df['keywd'].astype(int)
-    df['Ath'] = df['Ath'].astype(int)
+    df.loc[:, 'keywd'] = df['keywd'].astype(int)
+    df.loc[:, 'Ath'] = df['Ath'].astype(int)
     df = df.drop(columns="raw")
     # Look up if root/shoot terminology used in abstract
     for index, row in df.iterrows():
@@ -187,6 +189,6 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
             df.loc[index, "shoot"] = 1
         else:
             df.loc[index, "shoot"] = 0
-    df['root'] = df['root'].astype(int)
-    df['shoot'] = df['shoot'].astype(int)
+    df.loc[:, 'root'] = df['root'].astype(int)
+    df.loc[:, 'shoot'] = df['shoot'].astype(int)
     return df
