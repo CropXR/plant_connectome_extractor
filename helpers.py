@@ -130,6 +130,13 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
     handle = ez.efetch(db="pubmed", id=','.join(map(str, pmid)),
                        rettype="xml", retmode="text")
     records = ez.read(handle)
+
+    title_dict = {}
+    for article in records['PubmedArticle']:
+        title = article['MedlineCitation']['Article']['ArticleTitle']
+        title_dict[int(article['MedlineCitation']['PMID'])] = str(title)
+    df.loc[:, 'title'] = df['Pubmed ID'].map(title_dict)
+
     abstracts = [pubmed_article['MedlineCitation']['Article']['Abstract'][
                      'AbstractText'][0]
                  if 'Abstract' in pubmed_article['MedlineCitation'][
