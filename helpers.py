@@ -137,6 +137,23 @@ def annotate_from_pmid(df: pd.DataFrame, keywords: list[str]) -> pd.DataFrame:
         title_dict[int(article['MedlineCitation']['PMID'])] = str(title)
     df.loc[:, 'title'] = df['Pubmed ID'].map(title_dict)
 
+    auth_dict = {}
+    for article in records['PubmedArticle']:
+        auth = article['MedlineCitation']['Article']['AuthorList'][0]['LastName']
+        # print(auth)
+        auth_dict[int(article['MedlineCitation']['PMID'])] = str(auth)
+    df.loc[:, 'Author'] = df['Pubmed ID'].map(auth_dict)
+
+    year_dict = {}
+    for article in records['PubmedArticle']:
+        year = article['MedlineCitation']['Article']['ArticleDate']
+        if len(year) != 0: #some ArticleDate field are empty and would lead to an error
+            year = year[0]['Year']
+        else: #if the ArticleDate is empty, use the DateCompleted instead (might be different from ArticleDate)
+            year = article['MedlineCitation']['DateCompleted']['Year']
+        year_dict[int(article['MedlineCitation']['PMID'])] = str(year)
+    df.loc[:, 'year'] = df['Pubmed ID'].map(year_dict)
+
     abstracts = [pubmed_article['MedlineCitation']['Article']['Abstract'][
                      'AbstractText'][0]
                  if 'Abstract' in pubmed_article['MedlineCitation'][
